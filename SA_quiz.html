@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Знаешь или нет? · Блок 1: Требования</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7fb;
+    --surface: #ffffff;
+    --border: #e4e0f0;
+    --border-light: #ede9f8;
+    --text: #1a1a1a;
+    --text-muted: #9490a8;
+    --text-secondary: #555;
+    --accent: #7c5cbf;
+    --accent-light: #f3f0fc;
+    --accent-border: #d4c8f0;
+    --correct: #2d7a3f;
+    --correct-bg: #e6f4ea;
+    --correct-border: #b3dab9;
+    --wrong: #b91c1c;
+    --wrong-bg: #fdecea;
+    --wrong-border: #f5b8b8;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .quiz-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .quiz-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .quiz-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+  }
+
+  .quiz-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .progress-wrap {
+    margin-bottom: 1.75rem;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 5px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+
+  /* MAIN LAYOUT */
+  .quiz-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .quiz-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* STAIRCASE */
+  .staircase-wrap {
+    flex-shrink: 0;
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  .staircase-svg {
+    width: 110px;
+    height: 320px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .question-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .option {
+    padding: 11px 15px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface);
+    text-align: left;
+    line-height: 1.5;
+    font-family: inherit;
+  }
+
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  .option.correct {
+    border-color: var(--correct-border);
+    background: var(--correct-bg);
+    color: var(--correct);
+    font-weight: 500;
+  }
+
+  .option.wrong {
+    border-color: var(--wrong-border);
+    background: var(--wrong-bg);
+    color: var(--wrong);
+  }
+
+  .option.disabled { cursor: default; opacity: 0.6; }
+  .option.correct.disabled { opacity: 1; }
+  .option.wrong.disabled { opacity: 1; }
+
+  .explanation {
+    display: none;
+    margin-top: 1rem;
+    padding: 12px 16px;
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: #3d2870;
+    line-height: 1.7;
+  }
+
+  .explanation.show { display: block; }
+
+  .btn-next {
+    display: none;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+
+  .btn-next:hover { opacity: 0.9; }
+  .btn-next.show { display: block; }
+
+  /* SCORE SCREEN */
+  .score-screen {
+    display: none;
+    text-align: center;
+  }
+
+  .score-screen.show { display: block; }
+
+  .score-emoji {
+    font-size: 56px;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+
+  .score-level {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .score-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+  }
+
+  .score-comment {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .score-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--accent-light);
+    border: 1.5px solid var(--accent-border);
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+
+  .score-breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+  }
+
+  .breakdown-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .breakdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.5;
+  }
+
+  .breakdown-item:last-child { border-bottom: none; }
+  .breakdown-icon { flex-shrink: 0; margin-top: 2px; }
+
+  .btn-retry {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+
+  .btn-retry:hover { opacity: 0.9; }
+
+  .kb-link {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .kb-link:hover { text-decoration: underline; }
+
+  @media (max-width: 560px) {
+    .quiz-layout { flex-direction: column-reverse; gap: 12px; }
+    .staircase-wrap { width: 100%; flex-direction: row; justify-content: center; padding-top: 0; }
+    .staircase-svg { width: 320px; height: 90px; }
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .quiz-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="quiz-header">
+    <div class="quiz-tag">Лиза в ИТ и дома · @it_and_home</div>
+    <div class="quiz-title">Знаешь или нет?</div>
+    <div class="quiz-sub">Блок 1: Требования · 10 вопросов</div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-meta">
+      <span id="progressLabel">Вопрос 1 из 10</span>
+      <span id="scoreLabel">0 баллов</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:10%"></div>
+    </div>
+  </div>
+
+  <div id="quizArea">
+    <div class="quiz-layout">
+      <div class="quiz-main">
+        <div id="questionCard" class="card">
+          <div class="question-num" id="questionNum">Вопрос 1</div>
+          <div class="question-text" id="questionText"></div>
+          <div class="options" id="options"></div>
+          <div class="explanation" id="explanation"></div>
+          <button class="btn-next" id="btnNext" onclick="nextQuestion()">Следующий вопрос →</button>
+        </div>
+      </div>
+
+      <div class="staircase-wrap">
+        <svg class="staircase-svg" id="staircaseSvg" viewBox="0 0 110 320" xmlns="http://www.w3.org/2000/svg">
+          <!-- Steps (10 steps, bottom to top) -->
+          <!-- Step outlines -->
+          <g id="steps">
+            <!-- step 1 (bottom) -->
+            <rect x="0" y="290" width="110" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 2 -->
+            <rect x="11" y="261" width="99" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 3 -->
+            <rect x="22" y="232" width="88" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 4 -->
+            <rect x="33" y="203" width="77" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 5 -->
+            <rect x="44" y="174" width="66" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 6 -->
+            <rect x="55" y="145" width="55" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 7 -->
+            <rect x="55" y="116" width="55" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 8 -->
+            <rect x="55" y="87" width="55" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 9 -->
+            <rect x="55" y="58" width="55" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+            <!-- step 10 (top) -->
+            <rect x="55" y="29" width="55" height="30" rx="4" fill="#ede9f8" stroke="#d4c8f0" stroke-width="1.5"/>
+          </g>
+
+          <!-- Step numbers -->
+          <text x="55" y="311" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">1</text>
+          <text x="61" y="282" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">2</text>
+          <text x="67" y="253" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">3</text>
+          <text x="73" y="224" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">4</text>
+          <text x="79" y="195" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">5</text>
+          <text x="83" y="166" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">6</text>
+          <text x="83" y="137" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">7</text>
+          <text x="83" y="108" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">8</text>
+          <text x="83" y="79" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">9</text>
+          <text x="83" y="50" text-anchor="middle" font-size="10" fill="#9490a8" font-family="sans-serif">10</text>
+
+          <!-- Star at top -->
+          <text x="83" y="22" text-anchor="middle" font-size="16" font-family="sans-serif">⭐</text>
+
+          <!-- Character group -->
+          <g id="character" transform="translate(55, 290)">
+            <!-- Body -->
+            <rect x="-8" y="-28" width="16" height="18" rx="4" fill="#7c5cbf"/>
+            <!-- Head -->
+            <circle cx="0" cy="-35" r="9" fill="#f5c7a0"/>
+            <!-- Hair -->
+            <ellipse cx="0" cy="-43" rx="9" ry="5" fill="#3d2020"/>
+            <!-- Eyes -->
+            <circle cx="-3" cy="-36" r="1.5" fill="#3d2020"/>
+            <circle cx="3" cy="-36" r="1.5" fill="#3d2020"/>
+            <!-- Smile -->
+            <path d="M -3 -31 Q 0 -28 3 -31" stroke="#3d2020" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- Arms -->
+            <line x1="-8" y1="-22" x2="-16" y2="-14" stroke="#7c5cbf" stroke-width="3" stroke-linecap="round"/>
+            <line x1="8" y1="-22" x2="16" y2="-14" stroke="#7c5cbf" stroke-width="3" stroke-linecap="round"/>
+            <!-- Legs -->
+            <line x1="-4" y1="-10" x2="-6" y2="2" stroke="#3d2870" stroke-width="3" stroke-linecap="round"/>
+            <line x1="4" y1="-10" x2="6" y2="2" stroke="#3d2870" stroke-width="3" stroke-linecap="round"/>
+            <!-- Shoes -->
+            <ellipse cx="-6" cy="3" rx="4" ry="2" fill="#3d2870"/>
+            <ellipse cx="6" cy="3" rx="4" ry="2" fill="#3d2870"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="score-screen" id="scoreScreen">
+    <div class="score-emoji" id="scoreEmoji"></div>
+    <div class="score-level" id="scoreLevel"></div>
+    <div class="score-title" id="scoreTitle"></div>
+    <div class="score-comment" id="scoreComment"></div>
+    <div class="score-badge" id="scoreBadge"></div>
+    <div class="score-breakdown" id="scoreBreakdown"></div>
+    <button class="btn-retry" onclick="restart()">Пройти ещё раз</button>
+    <a class="kb-link" href="https://t.me/it_and_home" target="_blank">Вернуться в канал @it_and_home</a>
+  </div>
+
+</div>
+
+<script>
+// Step positions for character (translateY on character group, bottom of each step)
+// Steps go bottom to top, character sits on top of each step
+const stepPositions = [
+  315, // ground - starting position below all steps
+  290, // step 1
+  261, // step 2
+  232, // step 3
+  203, // step 4
+  174, // step 5
+  145, // step 6
+  116, // step 7
+  87,  // step 8
+  58,  // step 9
+  29   // step 10
+];
+
+const questions = [
+  {
+    q: "Заказчик говорит: 'Хочу сократить время обработки заявки с 2 дней до 2 часов.' Это какой тип требования?",
+    options: ["Пользовательское требование", "Бизнес-требование", "Функциональное требование", "Нефункциональное требование"],
+    correct: 1,
+    explanation: "Это бизнес-требование: цель, которую хочет достичь бизнес. Отвечает на вопрос 'зачем мы это делаем?', без деталей реализации."
+  },
+  {
+    q: "'Менеджер хочет отправлять заявку на согласование одним кликом, не переключаясь между системами.' Это:",
+    options: ["Бизнес-требование", "Пользовательское требование", "Функциональное требование", "Ограничение"],
+    correct: 1,
+    explanation: "Пользовательское требование: описывает что пользователь хочет делать с системой. Не зачем (это BR), не как именно (это SR)."
+  },
+  {
+    q: "Какое из требований функциональное?",
+    options: [
+      "Система должна быть доступна 99.9% времени",
+      "Страница загружается за ≤ 2 секунды",
+      "При нажатии кнопки система создаёт заявку в CRM и отправляет уведомление руководителю",
+      "Данные передаются по зашифрованному каналу"
+    ],
+    correct: 2,
+    explanation: "Функциональное требование описывает что система делает, конкретное действие в ответ на событие. Остальные варианты — НФТ: доступность, производительность, безопасность."
+  },
+  {
+    q: "Какое требование хорошее?",
+    options: [
+      "Система должна быть надёжной",
+      "Система восстанавливается после сбоя за ≤ 5 минут",
+      "Система работает быстро",
+      "Данные должны быть защищены"
+    ],
+    correct: 1,
+    explanation: "Хорошее требование — конкретное и измеримое. '≤ 5 минут' — это проверяемо. Остальные варианты содержат слова без конкретных цифр: 'надёжная', 'быстро', 'защищены'."
+  },
+  {
+    q: "Найди плохое требование:",
+    options: [
+      "Система блокирует аккаунт после 5 неверных попыток ввода пароля",
+      "Уведомление отправляется в течение 1 минуты после оформления заказа",
+      "Система должна удобно отображать данные о заказах",
+      "Страница загружается за ≤ 2 секунды при нагрузке 1000 пользователей"
+    ],
+    correct: 2,
+    explanation: "'Удобно' — субъективное слово без измеримого критерия. Непонятно как проверить. Хорошее требование должно быть однозначным и проверяемым."
+  },
+  {
+    q: "Что такое трассировка требований?",
+    options: [
+      "Метод тестирования системы",
+      "Связь между требованиями разных уровней от бизнес-цели до тест-кейса",
+      "Способ согласования требований с заказчиком",
+      "Формат описания пользовательских сценариев"
+    ],
+    correct: 1,
+    explanation: "Трассировка — это связь между уровнями: бизнес-требование → пользовательское → системное → тест-кейс. Позволяет пройти по цепочке в обе стороны и понять что затронуто при изменениях."
+  },
+  {
+    q: "Критерии приёмки (Acceptance Criteria) пишутся:",
+    options: [
+      "После завершения разработки",
+      "В процессе тестирования",
+      "До начала разработки",
+      "После первого ревью кода"
+    ],
+    correct: 2,
+    explanation: "До начала разработки — это принципиально важно. Иначе каждый додумывает сам, и QA с разработчиком расходятся в понимании готовности."
+  },
+  {
+    q: "DoR (Definition of Ready) означает что:",
+    options: [
+      "Задача полностью завершена и готова к релизу",
+      "Задача готова к тому чтобы её взяли в разработку",
+      "Требования согласованы с бизнесом",
+      "Тест-кейсы написаны и проверены"
+    ],
+    correct: 1,
+    explanation: "DoR — задача готова к старту: требования написаны, критерии приёмки есть, зависимости разрешены. DoD — задача готова к финишу."
+  },
+  {
+    q: "Чем User Story отличается от Use Case?",
+    options: [
+      "User Story пишется на русском, Use Case на английском",
+      "User Story описывает полный сценарий с альтернативными потоками, Use Case — желание пользователя",
+      "User Story — короткая карточка желания пользователя, Use Case — полный сценарий с альтернативами и исключениями",
+      "Это одно и то же, просто разные названия"
+    ],
+    correct: 2,
+    explanation: "User Story — коротко о желании: 'Как менеджер, я хочу...'. Use Case — полный сценарий: предусловия, основной поток, альтернативные потоки, исключения."
+  },
+  {
+    q: "В Use Case менеджер при оплате выбрал СБП вместо карты. Это:",
+    options: [
+      "Исключение — система в ошибочном состоянии",
+      "Альтернативный поток — система работает нормально, пользователь выбрал другой путь",
+      "Бизнес-требование",
+      "Нефункциональное требование"
+    ],
+    correct: 1,
+    explanation: "Альтернативный поток — система работает корректно, но пользователь пошёл другим путём. Исключение — это когда что-то сломалось: карта заблокирована, нет связи с банком."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+let results = [];
+let charStep = 0; // current step index (0 = bottom)
+
+function init() {
+  updateCharacter(0);
+  showQuestion();
+}
+
+function getCharY(stepIdx) {
+  // stepIdx 0..9, 0 = bottom step
+  return stepPositions[stepIdx];
+}
+
+function updateCharacter(stepIdx, animate) {
+  const char = document.getElementById('character');
+  const y = getCharY(stepIdx);
+  if (animate) {
+    char.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  } else {
+    char.style.transition = 'none';
+  }
+  char.setAttribute('transform', 'translate(55, ' + y + ')');
+}
+
+function highlightStep(stepIdx) {
+  // stepIdx here is charStep (0=ground, 1=step1 ... 10=step10)
+  // rect index is stepIdx-1
+  const steps = document.querySelectorAll('#steps rect');
+  steps.forEach((s, i) => {
+    const rectStep = i + 1; // rect 0 = step 1
+    if (rectStep === stepIdx) {
+      s.setAttribute('fill', '#d4c8f0');
+      s.setAttribute('stroke', '#7c5cbf');
+    } else {
+      s.setAttribute('fill', '#ede9f8');
+      s.setAttribute('stroke', '#d4c8f0');
+    }
+  });
+}
+
+function showQuestion() {
+  const q = questions[current];
+  answered = false;
+
+  document.getElementById('questionNum').textContent = 'Вопрос ' + (current + 1);
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('progressLabel').textContent = 'Вопрос ' + (current + 1) + ' из ' + questions.length;
+  document.getElementById('scoreLabel').textContent = score + ' ' + plural(score, 'балл', 'балла', 'баллов');
+  document.getElementById('progressFill').style.width = ((current + 1) / questions.length * 100) + '%';
+
+  const optionsEl = document.getElementById('options');
+  optionsEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.onclick = () => selectOption(i);
+    optionsEl.appendChild(btn);
+  });
+
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('explanation').textContent = '';
+  document.getElementById('btnNext').className = 'btn-next';
+
+  if (current === questions.length - 1) {
+    document.getElementById('btnNext').textContent = 'Узнать результат →';
+  } else {
+    document.getElementById('btnNext').textContent = 'Следующий вопрос →';
+  }
+}
+
+function selectOption(idx) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[current];
+  const options = document.querySelectorAll('.option');
+
+  options.forEach((btn, i) => {
+    btn.classList.add('disabled');
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === idx && idx !== q.correct) btn.classList.add('wrong');
+  });
+
+  const isCorrect = idx === q.correct;
+
+  if (isCorrect) {
+    score++;
+    charStep = Math.min(charStep + 1, 10);
+    setTimeout(() => {
+      updateCharacter(charStep, true);
+      highlightStep(charStep);
+    }, 200);
+  }
+
+  results.push({ question: q.q, correct: isCorrect, correctAnswer: q.options[q.correct] });
+
+  const expEl = document.getElementById('explanation');
+  expEl.textContent = q.explanation;
+  expEl.classList.add('show');
+
+  document.getElementById('btnNext').classList.add('show');
+
+  document.getElementById('scoreLabel').textContent = score + ' ' + plural(score, 'балл', 'балла', 'баллов');
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'none';
+
+  const screen = document.getElementById('scoreScreen');
+  screen.classList.add('show');
+
+  let emoji, level, title, comment;
+
+  if (score <= 4) {
+    emoji = '📖';
+    level = 'Блок 1: Требования';
+    title = 'Начало положено';
+    comment = 'Теория впереди, главное что уже начала. Возвращайся к базе знаний и попробуй ещё раз 🙂';
+  } else if (score <= 6) {
+    emoji = '💡';
+    level = 'Блок 1: Требования';
+    title = 'База есть';
+    comment = 'Основное понимание есть, но некоторые нюансы пока уходят. Ещё немного практики и всё встанет на место.';
+  } else if (score <= 8) {
+    emoji = '🎯';
+    level = 'Блок 1: Требования';
+    title = 'Почти, но не считается';
+    comment = 'Тема требований освоена хорошо, но пара вопросов ускользнула. Так держать 💪';
+  } else {
+    emoji = '🚀';
+    level = 'Блок 1: Требования';
+    title = 'Отлично!';
+    comment = 'Блок требований закрыт на отлично. Следующий блок уже ждёт 😎';
+  }
+
+  document.getElementById('scoreEmoji').textContent = emoji;
+  document.getElementById('scoreLevel').textContent = level;
+  document.getElementById('scoreTitle').textContent = title;
+  document.getElementById('scoreComment').textContent = comment;
+  document.getElementById('scoreBadge').textContent = score + ' из ' + questions.length + ' правильных ответов';
+
+  const breakdown = document.getElementById('scoreBreakdown');
+  breakdown.innerHTML = '<div class="breakdown-title">Разбор ответов</div>';
+  results.forEach((r) => {
+    const item = document.createElement('div');
+    item.className = 'breakdown-item';
+    item.innerHTML = `<span class="breakdown-icon">${r.correct ? '✅' : '❌'}</span><span>${r.correct ? 'Верно' : 'Правильный ответ: ' + r.correctAnswer}</span>`;
+    breakdown.appendChild(item);
+  });
+}
+
+function restart() {
+  current = 0;
+  score = 0;
+  answered = false;
+  results = [];
+  charStep = 0;
+
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('scoreScreen').classList.remove('show');
+
+  updateCharacter(0, false);
+  highlightStep(-1);
+  showQuestion();
+}
+
+function plural(n, one, few, many) {
+  if (n % 10 === 1 && n % 100 !== 11) return one;
+  if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return many;
+  return many;
+}
+
+init();
+</script>
+</body>
+</html>

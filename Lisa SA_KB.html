@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Записки SA · @it_and_home</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7fb;
+    --surface: #ffffff;
+    --border: #e4e0f0;
+    --border-light: #ede9f8;
+    --text: #1a1a1a;
+    --text-muted: #9490a8;
+    --text-secondary: #444;
+    --accent: #7c5cbf;
+    --accent-light: #f3f0fc;
+    --accent-border: #d4c8f0;
+    --tag-all-bg: #ede9f8;
+    --tag-all-color: #5b3fa6;
+    --tag-mid-bg: #fdf0fb;
+    --tag-mid-color: #9b3d9b;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .header-tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  header p a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  header p a:hover { text-decoration: underline; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .toc-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .toc-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .toc-list li a {
+    font-size: 14px;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.12s;
+  }
+
+  .toc-list li a:hover { color: var(--accent); }
+
+  .toc-list li a::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .section { margin-bottom: 3rem; }
+
+  .section-anchor {
+    display: block;
+    height: 0;
+    margin-top: -1rem;
+    padding-top: 1rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .section-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s;
+  }
+
+  .card-head:hover { background: var(--accent-light); }
+
+  .card-head-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    flex: 1;
+  }
+
+  .card-arrow {
+    color: #ccc;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .card-head.open .card-arrow { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    border-top: 1px solid var(--border-light);
+    padding: 16px 18px;
+  }
+
+  .card-body.open { display: block; }
+
+  .item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .item:last-child { border-bottom: none; padding-bottom: 0; }
+  .item:first-child { padding-top: 0; }
+
+  .item-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .item-text {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  .item-text strong { color: #111; font-weight: 600; }
+
+  .item-text code {
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 12px;
+    background: var(--accent-light);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  .formula {
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #3d2870;
+    margin: 10px 0;
+    line-height: 1.7;
+  }
+
+  .formula strong { color: var(--accent); }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: #bbb;
+    text-align: center;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .page { padding: 1.25rem 1rem 3rem; }
+    header h1 { font-size: 20px; }
+    .section-title { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="header-tag">Записки SA · @it_and_home</div>
+  <h1>Записки SA</h1>
+  <p>Пополняется по мере выхода постов в канале <a href="https://t.me/it_and_home" target="_blank">@it_and_home</a></p>
+</header>
+
+<div class="toc">
+  <div class="toc-title">Содержание</div>
+  <ul class="toc-list">
+    <li><a href="#requirements">Требования: виды и классификация</a></li>
+    <li><a href="#good-bad">Хорошие и плохие требования</a></li>
+    <li><a href="#traceability">Трассировка, критерии приёмки, DoD и DoR</a></li>
+    <li><a href="#userstory">User Story и Use Case</a></li>
+  </ul>
+</div>
+
+<!-- БЛОК 1: ТРЕБОВАНИЯ -->
+<div class="section">
+  <span class="section-anchor" id="requirements"></span>
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">Требования: виды и классификация</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Что такое требование и зачем его классифицировать</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Требование</div>
+        <div class="item-text">Зафиксированное условие или способность, которым должна соответствовать система, чтобы решить задачу бизнеса или пользователя.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Зачем классифицировать</div>
+        <div class="item-text">
+          Разные типы требований — разные аудитории и разный уровень детализации.<br>
+          Бизнес не читает технические требования. Разработчик не должен угадывать бизнес-логику.<br>
+          Классификация помогает:<br>
+          · не потерять ничего важного<br>
+          · понять кто за что отвечает<br>
+          · правильно расставить приоритеты
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Виды требований: от бизнеса к системе</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Бизнес-требования (BR)</div>
+        <div class="item-text"><strong>Зачем это бизнесу.</strong> Цели, проблемы, ожидаемый результат. Отвечают на вопрос "почему мы это делаем?". Пишутся на уровне бизнеса, без технических деталей.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Пользовательские требования (UR)</div>
+        <div class="item-text"><strong>Что пользователь хочет делать с системой.</strong> Описывают задачи и сценарии со стороны пользователя.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Системные требования (SR)</div>
+        <div class="item-text"><strong>Что должна делать система.</strong> Делятся на функциональные (ФТ) и нефункциональные (НФТ). Это уровень аналитика: перевод пользовательских требований в конкретику для разработки.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Ограничения</div>
+        <div class="item-text">Внешние условия, в которых работает система: законодательство, стандарты, технологический стек, бюджет и сроки.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Функциональные требования (ФТ)</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Что это</div>
+        <div class="item-text"><strong>Что система должна делать.</strong> Конкретные действия, функции, поведение системы в ответ на входные данные.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Признаки хорошего ФТ</div>
+        <div class="item-text">
+          · Однозначное: нельзя трактовать по-разному<br>
+          · Проверяемое: QA может написать тест-кейс<br>
+          · Без слов "быстро", "удобно", "гибко" без цифр<br>
+          · Читается без вопросов у разработчика
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Примеры</div>
+        <div class="item-text">
+          ✓ Система отправляет email-уведомление в течение 1 минуты после оформления заказа<br>
+          ✓ При вводе неверного пароля система блокирует аккаунт после 5 попыток<br>
+          ✗ Система должна удобно уведомлять пользователей
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Нефункциональные требования (НФТ)</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Что это</div>
+        <div class="item-text"><strong>Как система это делает.</strong> Качественные характеристики: производительность, надёжность, безопасность, масштабируемость, удобство поддержки.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Основные группы НФТ</div>
+        <div class="item-text">
+          <strong>Производительность</strong> — время отклика, пропускная способность<br>
+          <strong>Надёжность</strong> — доступность (uptime), восстановление после сбоев<br>
+          <strong>Безопасность</strong> — аутентификация, шифрование, аудит<br>
+          <strong>Масштабируемость</strong> — поведение под нагрузкой<br>
+          <strong>Удобство поддержки</strong> — логирование, мониторинг, документация
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Главное правило</div>
+        <div class="item-text">НФТ должны быть измеримыми. Не "система должна быть быстрой", а "страница загружается за ≤ 2 секунды при нагрузке 1000 одновременных пользователей".</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Быстрая проверка</div>
+        <div class="item-text">Это про то, что система делает? → ФТ. Это про то, как хорошо она это делает? → НФТ.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- БЛОК 2: ХОРОШИЕ И ПЛОХИЕ -->
+<div class="section">
+  <span class="section-anchor" id="good-bad"></span>
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">Хорошие и плохие требования</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Критерии хорошего требования</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Однозначное</div>
+        <div class="item-text">Читают двое, понимают одинаково. Нет слов "быстро", "удобно", "гибко" без расшифровки.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Проверяемое</div>
+        <div class="item-text">QA может написать тест-кейс. Если непонятно как проверить, требование сырое.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Измеримое</div>
+        <div class="item-text">Есть конкретные цифры или условия. Не "система должна быть надёжной", а "доступность не менее 99.9%".</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Полное</div>
+        <div class="item-text">Описаны все сценарии, включая что происходит когда что-то идёт не так.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Плохое vs хорошее: примеры</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Плохое</div>
+        <div class="item-text">✗ Система должна быстро обрабатывать заказы<br>✗ Система должна быть надёжной<br>✗ Система должна удобно отображать данные о заказах</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Хорошее</div>
+        <div class="item-text">✓ Система обрабатывает заказ за ≤ 3 секунды при нагрузке до 500 пользователей одновременно<br>✓ Система восстанавливается после сбоя за ≤ 5 минут<br>✓ Страница со списком заказов загружается за ≤ 2 секунды и отображает не менее 50 записей на экране</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- БЛОК 3: ТРАССИРОВКА И КРИТЕРИИ ПРИЁМКИ -->
+<div class="section">
+  <span class="section-anchor" id="traceability"></span>
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">Трассировка и критерии приёмки</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Трассировка требований</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Что это</div>
+        <div class="item-text">Связь между требованиями разных уровней. Каждое требование можно проследить от бизнес-цели до тест-кейса и обратно.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Цепочка</div>
+        <div class="item-text">Бизнес-требование → Пользовательское требование → Системное требование → Тест-кейс</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Зачем</div>
+        <div class="item-text">
+          · Видно откуда взялась каждая функция<br>
+          · Легко оценить влияние изменений: поменяли одно, сразу видно что затронуто<br>
+          · Ничего не теряется между "хотелками" бизнеса и кодом<br>
+          · Помогает при приёмке: каждое требование закрыто тестом
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Инструменты</div>
+        <div class="item-text">Матрица трассировки (RTM), Jira с иерархией задач, Confluence.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Пример RTM</div>
+        <div class="item-text">
+          BR-01: сократить время обработки заявки<br>
+          → UR-01: менеджер отправляет заявку одним кликом<br>
+          → SR-01: система создаёт заявку в CRM за ≤ 3 сек<br>
+          → TC-01: тест-кейс на создание заявки
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Критерии приёмки (Acceptance Criteria)</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Что это</div>
+        <div class="item-text">Условия, при которых требование считается выполненным. Пишутся до начала разработки и согласовываются со всеми участниками.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Зачем</div>
+        <div class="item-text">Без критериев приёмки QA и разработчик могут разойтись в понимании готовности. Критерии снимают этот вопрос заранее.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Формат Given-When-Then</div>
+        <div class="item-text">
+          <div class="formula">
+            <strong>Given</strong> (условие): менеджер авторизован в системе<br>
+            <strong>When</strong> (действие): нажимает кнопку "Отправить заявку"<br>
+            <strong>Then</strong> (результат): заявка создаётся в CRM, менеджер видит подтверждение, руководитель получает уведомление
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Признаки хороших критериев</div>
+        <div class="item-text">
+          · Написаны до начала разработки<br>
+          · QA может написать тест-кейс без вопросов<br>
+          · Однозначно: выполнено или нет<br>
+          · Покрывают и основной сценарий, и ошибки
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">AC vs тест-кейс</div>
+        <div class="item-text">
+          <strong>AC</strong> — "что проверяем". Условия на уровне требования, пишет аналитик до разработки.<br>
+          <strong>Тест-кейс</strong> — "как именно проверяем". Конкретные шаги, входные данные, ожидаемый результат. Пишет QA на основе AC.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Definition of Done и Definition of Ready</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Definition of Done (DoD)</div>
+        <div class="item-text">Список условий при которых задача считается полностью завершённой. Договорённость команды: код написан, покрыт тестами, прошёл ревью, задеплоен, документация обновлена. Применяется к каждой задаче как чеклист.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Definition of Ready (DoR)</div>
+        <div class="item-text">Список условий при которых задача готова к тому чтобы её взяли в разработку. Требования написаны, критерии приёмки есть, зависимости разрешены, оценка сделана.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Коротко</div>
+        <div class="item-text">DoR — задача готова к старту. DoD — задача готова к финишу.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Связь с AC</div>
+        <div class="item-text">AC отвечают на вопрос что проверяем в конкретной фиче. DoD отвечает на вопрос что ещё нужно сделать помимо самой фичи чтобы считать задачу закрытой.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- БЛОК 4: USER STORY И USE CASE -->
+<div class="section">
+  <span class="section-anchor" id="userstory"></span>
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">User Story и Use Case</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Кто пишет и зачем SA это знать</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">User Story</div>
+        <div class="item-text">Зона BA. Короткая карточка желания пользователя без деталей реализации и альтернативных сценариев.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Use Case</div>
+        <div class="item-text">Чаще зона SA, хотя зависит от команды. Полный сценарий взаимодействия пользователя с системой.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Границы BA и SA</div>
+        <div class="item-text">Во многих командах размыты. SA должен понимать оба формата независимо от того кто формально за что отвечает.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">User Story</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Формула</div>
+        <div class="item-text">
+          <div class="formula"><strong>Как</strong> [роль], <strong>я хочу</strong> [действие], <strong>чтобы</strong> [ценность]</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Пример</div>
+        <div class="item-text">Как менеджер, я хочу отправлять заявку одним кликом, чтобы не переключаться между системами.</div>
+      </div>
+      <div class="item">
+        <div class="item-label">Когда использовать</div>
+        <div class="item-text">Планирование спринта. Быстро, понятно, фокус на ценности для пользователя.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">Use Case</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Состав</div>
+        <div class="item-text">
+          · Предусловия<br>
+          · Основной поток<br>
+          · Альтернативные потоки<br>
+          · Исключения (ошибки)
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Альтернативный поток vs исключение</div>
+        <div class="item-text">
+          <strong>Альтернативный поток</strong> — система работает нормально, пользователь выбрал другой путь (оплата через СБП вместо карты).<br>
+          <strong>Исключение</strong> — система в ошибочном состоянии (карта заблокирована, нет связи с банком).
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-label">Когда использовать</div>
+        <div class="item-text">Когда важно описать все сценарии: платёжные процессы, авторизация, критичная бизнес-логика где цена ошибки высокая.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head open" onclick="toggle(this)">
+      <div class="card-head-title">User Story vs Use Case</div>
+      <svg class="card-arrow" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+    <div class="card-body open">
+      <div class="item">
+        <div class="item-label">Коротко</div>
+        <div class="item-text">User Story — "хочу добраться из А в Б". Use Case — пошаговая инструкция, включая что делать если дорога закрыта, машина сломалась или бензин кончился.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="https://t.me/it_and_home" target="_blank">@it_and_home</a> · обновляется по мере выхода постов
+</footer>
+
+</div>
+
+<script>
+  function toggle(headEl) {
+    headEl.classList.toggle('open');
+    headEl.nextElementSibling.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
