@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Паттерны интеграции — база знаний</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1a1a18;
+    --text2: #5a5a56;
+    --text3: #9a9a94;
+    --blue-bg: #e8f0fb;
+    --blue-text: #1a4fa0;
+    --blue-border: #b0c8f0;
+    --green-bg: #e6f4ec;
+    --green-text: #1a6b38;
+    --green-border: #a0d4b4;
+    --amber-bg: #fdf3e0;
+    --amber-text: #7a4800;
+    --amber-border: #e8c870;
+    --red-bg: #fdeeed;
+    --red-text: #9a2020;
+    --red-border: #f0b0b0;
+    --purple-bg: #f0edfb;
+    --purple-text: #4a2fa0;
+    --purple-border: #c8b8f0;
+    --teal-bg: #e4f4f4;
+    --teal-text: #0f6060;
+    --teal-border: #90d0d0;
+    --gray-bg: #f0efe9;
+    --gray-text: #5a5a56;
+    --gray-border: #c8c8c0;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Nav */
+  .nav {
+    position: sticky;
+    top: 0;
+    background: rgba(247,246,243,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 0.5px solid var(--border2);
+    padding: 12px 24px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    z-index: 100;
+  }
+  .nav-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    border: 0.5px solid var(--border2);
+    background: var(--surface);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .nav-btn:hover { background: var(--surface2); }
+  .nav-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Header */
+  .header { margin-bottom: 40px; }
+  .header-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; font-weight: 600; margin-bottom: 10px; line-height: 1.3; }
+  .header p { font-size: 14px; color: var(--text2); max-width: 600px; line-height: 1.7; }
+
+  /* Level tabs */
+  .levels {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin-bottom: 36px;
+  }
+  .level-card {
+    padding: 14px 16px; border-radius: var(--radius);
+    border: 0.5px solid var(--border2); background: var(--surface);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .level-card:hover { border-color: var(--border2); background: var(--surface2); }
+  .level-card.active { border-color: var(--blue-border); background: var(--blue-bg); }
+  .level-card-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 4px;
+  }
+  .level-card.active .level-card-label { color: var(--blue-text); }
+  .level-card:not(.active) .level-card-label { color: var(--text3); }
+  .level-card-q { font-size: 13px; line-height: 1.5; }
+  .level-card.active .level-card-q { color: var(--blue-text); }
+  .level-card:not(.active) .level-card-q { color: var(--text2); }
+
+  /* Section */
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  .section-header {
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 0.5px solid var(--border2);
+  }
+  .section-header h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .section-header p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+  /* Category label */
+  .cat-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--text3);
+    margin: 28px 0 12px; padding-bottom: 6px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Pattern card */
+  .card {
+    background: var(--surface); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px; cursor: pointer; user-select: none;
+  }
+  .card-head:hover { background: var(--surface2); }
+  .card-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+  .card-meta { flex: 1; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .card-sub { font-size: 13px; color: var(--text2); }
+  .card-badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .badge {
+    font-size: 11px; font-weight: 500; padding: 2px 8px;
+    border-radius: 20px; white-space: nowrap;
+  }
+  .badge-blue   { background: var(--blue-bg);   color: var(--blue-text);   border: 0.5px solid var(--blue-border); }
+  .badge-green  { background: var(--green-bg);  color: var(--green-text);  border: 0.5px solid var(--green-border); }
+  .badge-amber  { background: var(--amber-bg);  color: var(--amber-text);  border: 0.5px solid var(--amber-border); }
+  .badge-gray   { background: var(--gray-bg);   color: var(--gray-text);   border: 0.5px solid var(--gray-border); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
+  .badge-teal   { background: var(--teal-bg);   color: var(--teal-text);   border: 0.5px solid var(--teal-border); }
+  .chevron { font-size: 10px; color: var(--text3); transition: transform 0.2s; margin-left: 6px; }
+  .card.open .chevron { transform: rotate(180deg); }
+
+  .card-body {
+    display: none; padding: 0 18px 18px;
+    border-top: 0.5px solid var(--border);
+  }
+  .card.open .card-body { display: block; }
+
+  /* Body blocks */
+  .analogy {
+    background: var(--amber-bg); border-radius: var(--radius-sm);
+    padding: 11px 14px; font-size: 13px; color: var(--amber-text);
+    margin: 14px 0 12px; line-height: 1.6;
+  }
+  .analogy b { font-weight: 600; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .col { border-radius: var(--radius-sm); padding: 11px 13px; }
+  .col-bad  { background: var(--red-bg);   border: 0.5px solid var(--red-border); }
+  .col-good { background: var(--green-bg); border: 0.5px solid var(--green-border); }
+  .col-head {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 7px;
+  }
+  .col-bad .col-head  { color: var(--red-text); }
+  .col-good .col-head { color: var(--green-text); }
+  .col-item {
+    font-size: 13px; color: var(--text2); padding: 4px 0;
+    border-bottom: 0.5px solid var(--border); line-height: 1.5;
+  }
+  .col-item:last-child { border-bottom: none; }
+
+  .example {
+    background: var(--purple-bg); border-radius: var(--radius-sm);
+    padding: 11px 14px; font-size: 13px; color: var(--purple-text);
+    margin: 12px 0; line-height: 1.6;
+  }
+  .example b { font-weight: 600; }
+
+  .tools-row {
+    display: flex; align-items: center; gap: 7px;
+    margin: 10px 0; font-size: 13px; color: var(--text2); flex-wrap: wrap;
+  }
+  .tool-chip {
+    background: var(--surface2); border: 0.5px solid var(--border2);
+    border-radius: 20px; padding: 2px 9px; font-size: 12px; color: var(--text2);
+  }
+
+  .note {
+    background: var(--teal-bg); border-left: 3px solid var(--teal-border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 9px 13px; font-size: 13px; color: var(--teal-text);
+    margin: 10px 0; line-height: 1.6;
+  }
+  .note b { font-weight: 600; }
+
+  .mnemonic {
+    display: inline-block; background: var(--surface2);
+    border-radius: 20px; padding: 3px 12px;
+    font-size: 12px; font-weight: 500; color: var(--text2); margin-top: 8px;
+  }
+  .mnemonic::before { content: '💡 '; }
+
+  /* Mini card */
+  .mini-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 8px;
+    display: flex; align-items: flex-start; gap: 12px; opacity: 0.7;
+  }
+  .mini-icon { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; margin-top: 1px; }
+  .mini-text { flex: 1; }
+  .mini-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .mini-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .mini-badges { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; }
+
+  /* Complexity/value stars */
+  .attrs { display: flex; gap: 14px; margin: 10px 0 4px; font-size: 12px; color: var(--text3); }
+  .attr-item b { color: var(--text2); font-weight: 500; }
+
+  @media (max-width: 600px) {
+    .two-col { grid-template-columns: 1fr; }
+    .levels { grid-template-columns: 1fr; }
+    .card-badges { display: none; }
+    .nav { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showLevel('channel', this)">Уровень Канал</button>
+  <button class="nav-btn" onclick="showLevel('service', this)">Уровень Сервис</button>
+</div>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-label">База знаний — интеграционные паттерны</div>
+    <h1>Паттерны интеграции: Канал и Сервис</h1>
+    <p>Паттерн — проверенный способ решить типовую проблему. У каждого паттерна есть уровень (где в архитектуре применяется) и категория (какую задачу решает).</p>
+  </div>
+
+  <div class="levels">
+    <div class="level-card active" onclick="showLevel('channel', document.querySelector('.nav-btn'))">
+      <div class="level-card-label">Канал</div>
+      <div class="level-card-q">Как физически доставить данные от системы А к системе Б?</div>
+    </div>
+    <div class="level-card" onclick="showLevel('service', document.querySelectorAll('.nav-btn')[1])">
+      <div class="level-card-label">Сервис</div>
+      <div class="level-card-q">Как выстроить логику, коммуникацию и устойчивость?</div>
+    </div>
+    <div class="level-card">
+      <div class="level-card-label">Данные</div>
+      <div class="level-card-q">Как обеспечить согласованность и единую версию правды?</div>
+    </div>
+  </div>
+
+  <!-- ==================== КАНАЛ ==================== -->
+  <div id="channel" class="section visible">
+    <div class="section-header">
+      <h2>Уровень Канал</h2>
+      <p>Инфраструктура связности. Прежде чем думать о логике или надёжности — нужно выбрать по какому каналу пойдут данные. Закрывает проблемы: лавина N×N связей, нет контрактов, нет управляемой ИБ.</p>
+    </div>
+
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#1a4fa0"></span>
+      Категория: Управляемая связность каналов
+    </div>
+
+    <!-- Kafka -->
+    <div class="card open" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📋</div>
+        <div class="card-meta">
+          <div class="card-title">Message Broker (Kafka / MOM)</div>
+          <div class="card-sub">Асинхронный посредник между отправителем и получателем</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> доска объявлений в офисе. Менеджер повесил "Создан заказ №123" и ушёл. Склад, финансы и логистика читают доску каждый в своём темпе. Менеджер не ждёт и не знает кто читает.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без брокера</div>
+            <div class="col-item">Отправитель ждёт ответа: упал получатель — встал отправитель</div>
+            <div class="col-item">Новый потребитель = изменения у отправителя</div>
+            <div class="col-item">Пик нагрузки ломает получателя</div>
+            <div class="col-item">Одна упавшая система тянет за собой всех</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С брокером</div>
+            <div class="col-item">Положил в топик и пошёл дальше — не ждёт</div>
+            <div class="col-item">Новый потребитель просто подписывается на топик</div>
+            <div class="col-item">Kafka буферизует пик, потребители читают в своём темпе</div>
+            <div class="col-item">Упавший потребитель — сообщения ждут в топике</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> интернет-магазин создаёт заказ и публикует событие order.created в топик. Склад, финансы и уведомления подписаны на топик и реагируют независимо. Добавился новый сервис аналитики — просто подписался, ничего не меняли.</div>
+        <div class="note"><b>Для аналитика:</b> при описании интеграции фиксируй название топика и формат события. Топики лучше называть по бизнес-событию: order.created, customer.updated — не по системе-источнику.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Apache Kafka</span><span class="tool-chip">RabbitMQ</span></div>
+        <div class="mnemonic">Говорим в эфир — слышит тот, кому надо</div>
+      </div>
+    </div>
+
+    <!-- Schema Registry -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📄</div>
+        <div class="card-meta">
+          <div class="card-title">Schema Registry — контракты сообщений</div>
+          <div class="card-sub">Хранилище версионированных схем для топиков Kafka</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> обязательный шаблон служебных записок. Все заявки по единой форме из реестра. Изменил форму — согласуй новую версию. Никто не получит неожиданный формат. Это как Swagger, но для Kafka: Swagger описывает REST API, Schema Registry описывает сообщения в топиках.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Schema Registry</div>
+            <div class="col-item">Разработчик переименовал поле — потребители падают молча</div>
+            <div class="col-item">Контракт живёт в документации и устаревает незаметно</div>
+            <div class="col-item">Несовместимые изменения доходят до продакшна</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Schema Registry</div>
+            <div class="col-item">Схема зарегистрирована и версионирована рядом с Kafka</div>
+            <div class="col-item">Несовместимое изменение не пройдёт валидацию при отправке</div>
+            <div class="col-item">Любой видит что именно летит в каждом топике</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> сервис заказов публикует событие со схемой v1: поля order_id, amount, status. Через месяц хотят переименовать amount в total_price. Без Registry — потребители упадут. С Registry — изменение заблокируется как несовместимое, нужно выпустить схему v2 и дать потребителям время обновиться.</div>
+        <div class="note"><b>Для аналитика:</b> при описании интеграции через Kafka в ПАРе ссылка на схему в Registry сильнее чем ссылка на страницу в Confluence — схема живая и версионированная.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Confluent Schema Registry</span><span class="tool-chip">AsyncAPI</span><span class="tool-chip">OpenAPI</span></div>
+        <div class="mnemonic">Swagger — для REST. Schema Registry — для Kafka</div>
+      </div>
+    </div>
+
+    <!-- API Gateway -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🚪</div>
+        <div class="card-meta">
+          <div class="card-title">API Gateway — единая входная точка</div>
+          <div class="card-sub">Все внешние запросы идут через один шлюз</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> ресепшн в бизнес-центре. Все посетители снаружи приходят на ресепшн. Он проверяет кто вы, пускает или нет, записывает визит, направляет в нужный кабинет. Сотрудники внутри об этом не думают.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Gateway</div>
+            <div class="col-item">Каждый сервис сам проверяет токены, права, лимиты</div>
+            <div class="col-item">Новый внешний канал = изменения в каждом сервисе</div>
+            <div class="col-item">Логи вызовов разбросаны, нет единой картины</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Gateway</div>
+            <div class="col-item">Аутентификация и rate-limiting в одном месте</div>
+            <div class="col-item">Новый внешний канал — правило в Gateway, сервисы не трогаем</div>
+            <div class="col-item">Единые метрики всех входящих вызовов</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> при выводе монолита (Strangler Fig) Gateway становится точкой переключения трафика. Все системы обращаются к Gateway, он решает куда направить: в старый монолит или в новый сервис. Переключение через feature flags без изменений у потребителей.</div>
+        <div class="note"><b>Для аналитика:</b> Gateway окупается когда много внешних потребителей в одну точку, или при миграции монолита. При небольшом числе внешних интеграций один-в-один — может быть избыточен.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Kong</span><span class="tool-chip">Gravitee</span></div>
+        <div class="mnemonic">Один вход — много сервисов внутри</div>
+      </div>
+    </div>
+
+    <!-- Mediation -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🔄</div>
+        <div class="card-meta">
+          <div class="card-title">Mediation / Transformation — преобразование в канале</div>
+          <div class="card-sub">Посредник трансформирует формат, протокол или содержание данных</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> переводчик на переговорах. Стороны говорят на разных языках, переводчик в середине. Никто не учит чужой язык — этим занимается переводчик. Стороны не меняются.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Mediation</div>
+            <div class="col-item">Источник знает форматы всех получателей и трансформирует сам</div>
+            <div class="col-item">Получатели разбирают чужой формат — лишняя зависимость</div>
+            <div class="col-item">Добавился новый получатель — меняем источник</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Mediation</div>
+            <div class="col-item">Источник отдаёт в своём формате, посредник трансформирует</div>
+            <div class="col-item">Каждый получатель получает в своём формате</div>
+            <div class="col-item">Системы не знают друг о друге</div>
+          </div>
+        </div>
+        <div class="example"><b>Три вида трансформации:</b><br><br>
+          <b>Формат</b> — XML на входе, JSON на выходе. Поле называется customer_id в источнике, а получатель ждёт КодКлиента.<br><br>
+          <b>Протокол</b> — источник отдаёт по REST, получатель умеет только SFTP. Mediation принимает REST и кладёт файл.<br><br>
+          <b>Содержание</b> — источник отдаёт полную запись, получателю нужны только определённые поля. Или нужно добавить поле которого нет в источнике — например подставить код склада из справочника по региону из заказа.
+        </div>
+        <div class="note"><b>Для аналитика:</b> маппинг полей который ты описываешь в требованиях — это и есть задача Mediation. Фиксируй: что на входе, что на выходе, правила трансформации, откуда берутся значения которых нет в источнике.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Apache Camel</span><span class="tool-chip">Apache NiFi</span><span class="tool-chip">Gateway plugins</span></div>
+        <div class="mnemonic">Переводчик в канале — системы говорят на своих языках</div>
+      </div>
+    </div>
+
+    <!-- MFT -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📦</div>
+        <div class="card-meta">
+          <div class="card-title">MFT — управляемый файловый обмен</div>
+          <div class="card-sub">Защищённый шлюз для файлов с внешними партнёрами</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-amber">B2B</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> защищённый КПП для внешних курьеров. Партнёр не заходит в офис сам — оставляет посылку на КПП. Там проверяют, записывают в журнал, выдают подтверждение и только потом пускают внутрь.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Голый FTP</div>
+            <div class="col-item">Файл от партнёра попадает сразу внутрь без проверок</div>
+            <div class="col-item">Нет подтверждения доставки партнёру</div>
+            <div class="col-item">Нет аудита: кто что положил и когда</div>
+            <div class="col-item">Данные идут открытым текстом</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С MFT</div>
+            <div class="col-item">Файл проходит антивирусную проверку до попадания внутрь</div>
+            <div class="col-item">Автоматическое подтверждение доставки</div>
+            <div class="col-item">Полный аудит каждой передачи в обе стороны</div>
+            <div class="col-item">SFTP или AS2 — шифрование и электронная подпись</div>
+          </div>
+        </div>
+        <div class="example"><b>Про протоколы:</b><br><br>
+          <b>SFTP</b> — FTP с шифрованием. Минимальный уровень безопасности, данные не летят открытым текстом.<br><br>
+          <b>AS2</b> — с электронной подписью. Партнёр не может сказать "не получали" — есть криптографическое подтверждение факта передачи. Актуален когда нужно юридическое подтверждение или данные чувствительные.
+        </div>
+        <div class="note"><b>Для аналитика:</b> при описании интеграции с внешним партнёром через файлы в ПАРе раздел 7.5 (ИБ) спросит: как файлы проверяются на входе, есть ли аудит, как аутентифицируется партнёр, нужна ли электронная подпись.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">GoAnywhere</span><span class="tool-chip">OpenText</span></div>
+        <div class="mnemonic">Файл снаружи — сначала через КПП, потом внутрь</div>
+      </div>
+    </div>
+
+    <!-- Sync/Async modes -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#5a5a56"></span>
+      Базовый словарь: режимы взаимодействия
+    </div>
+
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🔀</div>
+        <div class="card-meta">
+          <div class="card-title">Четыре режима канала: Sync, Async, Псевдо-sync, Псевдо-async</div>
+          <div class="card-sub">Режим выбирается по потребности клиента, а не по возможностям получателя</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="example">
+          <b>Sync:</b> отправитель ждёт ответа здесь и сейчас. Как телефонный звонок — пока не ответили, ждёшь. REST-запрос.<br><br>
+          <b>Async:</b> отправитель не ждёт. Как сообщение в мессенджере — отправил и пошёл дальше. Kafka.<br><br>
+          <b>Псевдо-sync:</b> снаружи выглядит как sync — клиент ждёт ответа. Внутри async — сервис положил задачу в очередь и ждёт пока другой сервис обработает. Клиент не знает что внутри очередь.<br><br>
+          <b>Пример псевдо-sync:</b> пользователь нажал "Оформить заказ" и ждёт подтверждения. Сервис заказов положил задачу в Kafka, сервис обработки забрал и ответил. Пользователю кажется обычный REST.<br><br>
+          <b>Псевдо-async:</b> снаружи выглядит как async — клиент не ждёт, получит ответ потом. Внутри sync — обработка идёт сразу. Клиент получает результат через callback или вебхук.<br><br>
+          <b>Пример псевдо-async:</b> вебхук от внешнего сервиса. Ты не ждёшь — сервис сам пришлёт событие когда оно случится. Внутри у него синхронная обработка.
+        </div>
+        <div class="note"><b>Для аналитика:</b> когда описываешь интеграцию — фиксируй режим взаимодействия. Это влияет на выбор паттерна, требования к надёжности и UX.</div>
+        <div class="mnemonic">Режим — по потребности клиента, не по удобству получателя</div>
+      </div>
+    </div>
+
+    <!-- Service Mesh mini -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#9a9a94"></span>
+      Паттерны на перспективу
+    </div>
+    <div class="mini-card">
+      <div class="mini-icon">🌐</div>
+      <div class="mini-text">
+        <div class="mini-title">Service Mesh (Istio)</div>
+        <div class="mini-desc">Прозрачный сетевой слой между сервисами. Шифрование, повторы, метрики — автоматически для всех без кода в каждом сервисе. Инфраструктурно сложно, в дорожной карте на год 3.</div>
+      </div>
+      <div class="mini-badges"><span class="badge badge-amber">B2B</span><span class="badge badge-gray">год 3</span></div>
+    </div>
+  </div>
+
+  <!-- ==================== СЕРВИС ==================== -->
+  <div id="service" class="section">
+    <div class="section-header">
+      <h2>Уровень Сервис</h2>
+      <p>Логика, коммуникация и устойчивость. После того как выбран канал — нужно выстроить как сервисы взаимодействуют, как разбить монолит и что делать когда что-то идёт не так. Закрывает проблемы: хрупкость, монолит, нет наблюдаемости.</p>
+    </div>
+
+    <!-- Декомпозиция -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#4a2fa0"></span>
+      Категория: Декомпозиция и API
+    </div>
+
+    <!-- Strangler Fig -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🌿</div>
+        <div class="card-meta">
+          <div class="card-title">Strangler Fig — постепенный вывод монолита</div>
+          <div class="card-sub">Функции монолита заменяются новыми сервисами по одной, без остановки</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-amber">B2B B2C</span>
+          <span class="badge badge-gray">сложность: высокая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> фикус-душитель в джунглях. Растёт рядом с деревом, постепенно оплетает и в итоге занимает его место. Старое дерево умирает само — новое уже стоит. Никакой революции, только постепенное замещение.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Переписать монолит целиком</div>
+            <div class="col-item">Годы разработки</div>
+            <div class="col-item">Бизнес не получает новых функций всё это время</div>
+            <div class="col-item">Огромный риск: новая система может не заработать</div>
+            <div class="col-item">Откат невозможен</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">Strangler Fig</div>
+            <div class="col-item">Берёшь одну функцию, делаешь новый сервис</div>
+            <div class="col-item">Переключаешь трафик постепенно через feature flags</div>
+            <div class="col-item">Монолит продолжает работать</div>
+            <div class="col-item">Откат в любой момент — вернул трафик в монолит</div>
+          </div>
+        </div>
+        <div class="example"><b>Как работает технически:</b> все запросы идут через API Gateway. Gateway знает куда направить: в монолит или в новый сервис. Сначала 5% трафика на новый сервис — проверили, всё ок — 100%. Потребители не меняются, они всегда ходят в Gateway.</div>
+        <div class="note"><b>Для аналитика:</b> при описании интеграций с монолитом фиксируй: является ли эта функция кандидатом на вынос. Если да — какой критерий готовности нового сервиса, какой порядок переключения, что является откатом.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">API Gateway</span><span class="tool-chip">Feature flags</span></div>
+        <div class="mnemonic">Не сносим — заменяем по куску</div>
+      </div>
+    </div>
+
+    <!-- BFF -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📱</div>
+        <div class="card-meta">
+          <div class="card-title">BFF — Backend for Frontend</div>
+          <div class="card-sub">Отдельный backend под каждый тип пользовательского интерфейса</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-teal">B2C</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> переводчик в посольстве. Один говорит с китайскими гостями по-китайски, другой с французскими по-французски. Внутри страны один и тот же закон. Каждый клиент получает информацию в удобном для него виде.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Один общий API</div>
+            <div class="col-item">Мобайл получает лишние данные — тратит трафик пользователя</div>
+            <div class="col-item">API обрастает параметрами под каждый клиент</div>
+            <div class="col-item">Новый тип клиента = изменения в общем API</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С BFF</div>
+            <div class="col-item">Каждый клиент получает ровно то что нужно</div>
+            <div class="col-item">Внутренние сервисы не знают кто их спрашивает</div>
+            <div class="col-item">Новый тип клиента — новый BFF, остальное не трогаем</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> страница товара в интернет-магазине.<br><br>
+          <b>Веб-BFF</b> собирает: название, все фото, описание, характеристики, отзывы, похожие товары, остаток, историю цены.<br><br>
+          <b>Мобайл-BFF</b> собирает: название, одно фото, цену, кнопку купить. Всё.<br><br>
+          <b>Партнёр-BFF</b> собирает: артикул, цену, остаток, вес, габариты — в техническом формате партнёра.<br><br>
+          Внутренние сервисы товаров, склада и отзывов одни и те же. BFF — это адаптер между клиентом и внутренним миром.</div>
+        <div class="note"><b>Для аналитика:</b> BFF про пользовательские интерфейсы — сайт, мобайл, личный кабинет. Для интеграций между системами не применяется. Актуален когда у одного API принципиально разные потребители с разными потребностями.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Node.js</span><span class="tool-chip">GraphQL</span><span class="tool-chip">gRPC-Web</span></div>
+        <div class="mnemonic">Свой backend — под язык каждого клиента</div>
+      </div>
+    </div>
+
+    <!-- API Composition -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🧩</div>
+        <div class="card-meta">
+          <div class="card-title">API Composition — сборщик ответов</div>
+          <div class="card-sub">Один сервис собирает данные из нескольких систем и отдаёт единый ответ</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> менеджер с готовой сводкой. Сам сходил в CRM, ERP и склад — тебе показал одну карточку. Ты не знаешь откуда данные, тебе не надо делать три звонка.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Composition</div>
+            <div class="col-item">Клиент делает три запроса в три системы</div>
+            <div class="col-item">Клиент сам склеивает ответ</div>
+            <div class="col-item">Медленно, сложно, хрупко</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Composition</div>
+            <div class="col-item">Один запрос — один ответ</div>
+            <div class="col-item">Composition ходит в системы параллельно</div>
+            <div class="col-item">Клиент не знает откуда данные</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> карточка клиента в CRM-интерфейсе. Менеджер открывает — нужны данные из трёх систем: профиль из CRM, история заказов из ERP, бонусный счёт из программы лояльности. Composition принимает один запрос, параллельно идёт в три системы, склеивает ответ и отдаёт одну карточку.</div>
+        <div class="note"><b>Для аналитика:</b> когда видишь что для одного экрана нужны данные из нескольких систем — это кандидат на API Composition. Фиксируй: что нужно собрать, из каких источников, какая система является мастером для каждого куска данных.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">GraphQL Federation</span><span class="tool-chip">Apollo Router</span></div>
+        <div class="mnemonic">Один ответ — собран из многих источников</div>
+      </div>
+    </div>
+
+    <!-- Коммуникация -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#0f6060"></span>
+      Категория: Коммуникация
+    </div>
+
+    <!-- Event-Driven -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📡</div>
+        <div class="card-meta">
+          <div class="card-title">Event-Driven — событийная архитектура</div>
+          <div class="card-sub">Сервисы реагируют на события, а не вызывают друг друга напрямую</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> корпоративная рассылка. HR публикует "вышел новый сотрудник". IT настраивает доступы, СБ выдаёт пропуск, бухгалтерия заводит в систему — каждый реагирует сам. HR не знает кто что делает и не ждёт подтверждения от каждого.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Event-Driven</div>
+            <div class="col-item">Сервис A вызывает B, C и D напрямую</div>
+            <div class="col-item">A знает о существовании B, C и D</div>
+            <div class="col-item">Упал D — A тоже встал</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Event-Driven</div>
+            <div class="col-item">A публикует событие и не знает кто его слушает</div>
+            <div class="col-item">B, C и D реагируют независимо</div>
+            <div class="col-item">Упал D — A и другие не пострадали</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример:</b> сервис заказов публикует событие order.created. На него реагируют: сервис склада (резервирует товар), сервис уведомлений (шлёт письмо клиенту), сервис аналитики (обновляет статистику). Сервис заказов не знает об их существовании.</div>
+        <div class="note"><b>Для аналитика:</b> при описании бизнес-процессов думай о ключевых событиях: что происходит? Заказ создан, клиент зарегистрирован, оплата прошла. Это и есть кандидаты на события в Event-Driven архитектуре.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Kafka</span><span class="tool-chip">AsyncAPI</span></div>
+        <div class="mnemonic">Говорим в эфир — слышит тот, кому надо</div>
+      </div>
+    </div>
+
+    <!-- Pub/Sub -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">📢</div>
+        <div class="card-meta">
+          <div class="card-title">Pub/Sub — публикация и подписка</div>
+          <div class="card-sub">Один производитель, много независимых подписчиков</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> Telegram-канал. Автор пишет один пост — его читают тысячи подписчиков независимо друг от друга. Автор не знает кто подписан. Каждый подписчик читает в своём темпе.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Pub/Sub</div>
+            <div class="col-item">Производитель знает всех потребителей и шлёт каждому</div>
+            <div class="col-item">Новый потребитель = изменения у производителя</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Pub/Sub</div>
+            <div class="col-item">Производитель публикует в топик, не знает кто читает</div>
+            <div class="col-item">Новый потребитель просто подписывается</div>
+          </div>
+        </div>
+        <div class="example"><b>Разница Event-Driven и Pub/Sub:</b> Event-Driven — это принцип архитектуры (реагировать на события). Pub/Sub — это механизм доставки (один → многим через топик). Pub/Sub реализует Event-Driven. Kafka реализует Pub/Sub.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Kafka topics</span><span class="tool-chip">NATS</span></div>
+        <div class="mnemonic">Один → многим, без знания "кто слушает"</div>
+      </div>
+    </div>
+
+    <!-- Async Req-Reply -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🔔</div>
+        <div class="card-meta">
+          <div class="card-title">Async Request/Reply — асинхронный запрос-ответ</div>
+          <div class="card-sub">Клиент отправляет запрос и не ждёт — ответ придёт позже через callback или вебхук</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-teal">B2C</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> заказ в МФЦ. Подал документы, получил номер и ушёл. Когда готово — пришла смс с тем же номером. Не нужно сидеть и ждать у окошка.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Sync для медленных операций</div>
+            <div class="col-item">Клиент ждёт пока долгая операция завершится</div>
+            <div class="col-item">Таймауты, зависшие соединения</div>
+            <div class="col-item">Пик нагрузки ломает сервис</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">Async Request/Reply</div>
+            <div class="col-item">Клиент получил номер запроса и ушёл</div>
+            <div class="col-item">Ответ придёт через webhook или callback</div>
+            <div class="col-item">Пики гасятся очередью</div>
+          </div>
+        </div>
+        <div class="example"><b>Пример — вебхук от внешнего сервиса:</b> внешний сервис собирает пользовательские события. Вместо того чтобы вы периодически забирали файл с FTP, сервис сам присылает вебхук когда случилось событие. Вы получаете, кладёте в Kafka, отвечаете "принял". Обработка идёт асинхронно. Задержка — секунды вместо часов.</div>
+        <div class="note"><b>Для аналитика:</b> когда видишь интеграцию через FTP с внешним сервисом который поддерживает вебхуки — это кандидат на замену. Вопрос: насколько критична скорость реакции на событие.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Kafka + correlation ID</span><span class="tool-chip">Webhook</span></div>
+        <div class="mnemonic">Запрос ушёл, ответ заберём позже — по номеру</div>
+      </div>
+    </div>
+
+    <!-- Saga -->
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">⛓</div>
+        <div class="card-meta">
+          <div class="card-title">Saga — распределённая транзакция</div>
+          <div class="card-sub">Сквозной бизнес-процесс через несколько сервисов с возможностью отката</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-amber">B2B</span>
+          <span class="badge badge-gray">сложность: высокая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> бронирование поездки. Шаг 1 — забронировал гостиницу. Шаг 2 — купил билет. Шаг 3 — оплата не прошла. Запускаем откат: отменяем билет, снимаем бронь. Каждый шаг знает как откатиться.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Saga</div>
+            <div class="col-item">Шаг 1 прошёл, шаг 2 упал — данные рассогласованы</div>
+            <div class="col-item">Откат вручную или никак</div>
+            <div class="col-item">Непонятно в каком состоянии процесс</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Saga</div>
+            <div class="col-item">Каждый шаг имеет компенсирующее действие</div>
+            <div class="col-item">Откат запускается автоматически при сбое</div>
+            <div class="col-item">Состояние процесса всегда известно</div>
+          </div>
+        </div>
+        <div class="example"><b>Для аналитика:</b> Saga актуальна когда один бизнес-процесс затрагивает несколько систем и важна согласованность. Например: создать заказ + списать бонусы + зарезервировать товар + уведомить склад — всё должно произойти или ничего.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Camunda</span><span class="tool-chip">Temporal</span><span class="tool-chip">Conductor</span></div>
+        <div class="mnemonic">Шагнул не туда — есть кнопка "назад"</div>
+      </div>
+    </div>
+
+    <!-- Надёжность -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#9a2020"></span>
+      Категория: Надёжность
+    </div>
+
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">⚡</div>
+        <div class="card-meta">
+          <div class="card-title">Circuit Breaker — предохранитель</div>
+          <div class="card-sub">Отключает вызовы к сбойному сервису, защищая от каскадного отказа</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> электрический автомат в щитке. При коротком замыкании сам отключается — спасает всю проводку. Остальные комнаты не обесточиваются из-за одной.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Circuit Breaker</div>
+            <div class="col-item">Запрос к упавшему сервису висит до таймаута (30+ секунд)</div>
+            <div class="col-item">100 запросов = 100 потоков висят и ждут</div>
+            <div class="col-item">Ресурсы заканчиваются — падают живые сервисы</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Circuit Breaker</div>
+            <div class="col-item">При пороге ошибок — мгновенный отказ без ожидания</div>
+            <div class="col-item">Потоки свободны, остальные сервисы живут</div>
+            <div class="col-item">Через время пробует снова — закрывается если сервис ожил</div>
+          </div>
+        </div>
+        <div class="example"><b>Три состояния:</b> Закрыт (всё хорошо, запросы идут) → Открыт (ошибок много, сразу возвращает fallback) → Полуоткрыт (пробный запрос — если прошёл, закрывается обратно).<br><br><b>Fallback</b> — заготовленный ответ когда предохранитель открыт. Сервис рекомендаций упал — показываем популярные товары. Сервис остатков недоступен — показываем "уточните наличие".<br><br><b>Применимость:</b> только для REST. В Kafka не нужен — отправитель не ждёт ответа.</div>
+        <div class="note"><b>Для аналитика:</b> фиксируй в требованиях что возвращать когда сервис недоступен (fallback). Это бизнесовое решение которое разработчик не примет сам.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Resilience4j</span><span class="tool-chip">Istio</span></div>
+        <div class="mnemonic">Замкнуло — отключили, остальные живы</div>
+      </div>
+    </div>
+
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🔁</div>
+        <div class="card-meta">
+          <div class="card-title">Retry с backoff — автоматический повтор</div>
+          <div class="card-sub">При сбое повторяет запрос с нарастающей паузой</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> звонок другу у которого занято. Не долбим без остановки — перезваниваем через минуту, потом через три, потом через пять. Большинство кратковременных сбоев решается само.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Retry</div>
+            <div class="col-item">Кратковременная сетевая ошибка = сбой для пользователя</div>
+            <div class="col-item">Заявка в техподдержку на проблему которая уже прошла</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Retry</div>
+            <div class="col-item">200мс — 400мс — 800мс — большинство ошибок исчезают</div>
+            <div class="col-item">Человек не вовлекается в кратковременные сбои</div>
+          </div>
+        </div>
+        <div class="example"><b>Важно — идемпотентность:</b> Retry безопасен только если повторить запрос дважды = тот же результат что и один раз.<br><br>Получить данные — идемпотентно, повторять можно.<br>Создать заказ — не идемпотентно, повтор создаст два заказа.<br><br>Это нужно фиксировать в требованиях: можно ли применять Retry к этому вызову.</div>
+        <div class="note"><b>Для аналитика:</b> при описании каждого REST-вызова фиксируй является ли операция идемпотентной. От этого зависит можно ли применять Retry.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Resilience4j</span><span class="tool-chip">Spring Retry</span></div>
+        <div class="mnemonic">Не получилось? Попробуй ещё, но не сразу</div>
+      </div>
+    </div>
+
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🚢</div>
+        <div class="card-meta">
+          <div class="card-title">Bulkhead — переборки</div>
+          <div class="card-sub">Изолирует потребителей через разделённые пулы ресурсов</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-amber">B2B B2C</span>
+          <span class="badge badge-green">сложность: средняя</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> водонепроницаемые переборки на корабле. Пробоина в одном отсеке — корабль не тонет, вода не растекается.</div>
+        <div class="two-col">
+          <div class="col col-bad">
+            <div class="col-head">Без Bulkhead</div>
+            <div class="col-item">Медленный партнёр занял все 100 потоков сервиса</div>
+            <div class="col-item">Быстрые внутренние системы встали в очередь</div>
+            <div class="col-item">Один медленный потребитель роняет всех</div>
+          </div>
+          <div class="col col-good">
+            <div class="col-head">С Bulkhead</div>
+            <div class="col-item">Партнёру выделен свой пул — 20 потоков</div>
+            <div class="col-item">Внутренним системам свой пул — 80 потоков</div>
+            <div class="col-item">Партнёр тормозит в своём пуле, остальные не замечают</div>
+          </div>
+        </div>
+        <div class="example"><b>Когда актуален:</b> когда у одного сервиса есть потребители с сильно разным профилем нагрузки. Медленный внешний партнёр и быстрые внутренние системы — классический кейс.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">Thread/connection pools</span><span class="tool-chip">Istio</span></div>
+        <div class="mnemonic">Пробоина в отсеке — судно не тонет</div>
+      </div>
+    </div>
+
+    <!-- Наблюдаемость -->
+    <div class="cat-label">
+      <span class="cat-dot" style="background:#1a6b38"></span>
+      Категория: Наблюдаемость
+    </div>
+
+    <div class="card" onclick="toggle(this)">
+      <div class="card-head">
+        <div class="card-icon">🔍</div>
+        <div class="card-meta">
+          <div class="card-title">Distributed Tracing — сквозная трассировка</div>
+          <div class="card-sub">Каждому запросу присваивается ID, который проходит через все сервисы</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-blue">БАЗА</span>
+          <span class="badge badge-green">сложность: низкая</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="analogy"><b>Аналогия:</b> трек-номер посылки. Видишь в каком городе посылка сейчас и где задержалась. Не нужно звонить на каждый склад по отдельности.</div>
+        <div class="example"><b>Пример:</b> запрос прошёл через 5 сервисов и где-то завис. Без трассировки — нужно идти в логи каждого сервиса отдельно. С трассировкой — один поиск по trace ID показывает всю цепочку: где был каждый сервис, сколько времени потратил, на каком шаге задержка.</div>
+        <div class="note"><b>Для аналитика:</b> при описании интеграции фиксируй требование — trace ID должен передаваться между сервисами. Без этого диагностика инцидентов занимает дни.</div>
+        <div class="tools-row"><span style="color:var(--text3)">Инструменты:</span><span class="tool-chip">OpenTelemetry</span><span class="tool-chip">Tempo</span><span class="tool-chip">Jaeger</span></div>
+        <div class="mnemonic">У запроса свой трек-номер</div>
+      </div>
+    </div>
+
+    <!-- Mini cards -->
+    <div class="mini-card">
+      <div class="mini-icon">📝</div>
+      <div class="mini-text">
+        <div class="mini-title">Centralized Logging — централизованные логи</div>
+        <div class="mini-desc">Все сервисы пишут логи не в файл на сервере, а в единое хранилище. При инциденте один поиск по trace ID — видна вся история по всем сервисам.</div>
+      </div>
+      <div class="mini-badges"><span class="badge badge-blue">БАЗА</span></div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon">❤️</div>
+      <div class="mini-text">
+        <div class="mini-title">Health Check + Registry — проверка живости</div>
+        <div class="mini-desc">Каждый сервис сообщает платформе "я жив" через /health эндпоинт. Балансировщик направляет трафик только на живые инстансы. При описании интеграции — фиксируй требование: сервис должен иметь /health эндпоинт.</div>
+      </div>
+      <div class="mini-badges"><span class="badge badge-blue">БАЗА</span></div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon">🔒</div>
+      <div class="mini-text">
+        <div class="mini-title">Rate Limiting — лимиты запросов</div>
+        <div class="mini-desc">Ограничение числа запросов от одного потребителя в минуту. Один шумный клиент или зациклившаяся система не роняет сервис для всех остальных.</div>
+      </div>
+      <div class="mini-badges"><span class="badge badge-teal">B2C</span></div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon">🏍</div>
+      <div class="mini-text">
+        <div class="mini-title">Sidecar — вспомогательный контейнер</div>
+        <div class="mini-desc">Рядом с каждым сервисом запускается помощник, который берёт на себя инфраструктурную рутину: шифрование, Retry, метрики. Разработчики пишут бизнес-логику, платформенная команда — инфраструктуру.</div>
+      </div>
+      <div class="mini-badges"><span class="badge badge-amber">B2B B2C</span></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function toggle(card) {
+    card.classList.toggle('open');
+    event.stopPropagation();
+  }
+
+  function showLevel(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+    document.getElementById(id).classList.add('visible');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.level-card').forEach(c => c.classList.remove('active'));
+    const idx = id === 'channel' ? 0 : 1;
+    document.querySelectorAll('.level-card')[idx]?.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
